@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: fundcatalyst-api
+    runtime: docker
+    plan: starter  # $7/mo
+    region: singapore  # closest to VN
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fundcatalyst-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: fundcatalyst-redis
+          type: redis
+          property: connectionString
+      - key: ENABLE_SCHEDULER
+        value: "true"
+      - key: TZ
+        value: Asia/Ho_Chi_Minh
+      - key: DEBUG
+        value: "false"
+      - key: ANTHROPIC_API_KEY
+        sync: false  # set in dashboard
+      - key: ALLOWED_ORIGINS
+        value: '["*"]'  # tighten to your domain later
+
+  - type: redis
+    name: fundcatalyst-redis
+    plan: starter
+    region: singapore
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []  # internal-only
+
+databases:
+  - name: fundcatalyst-db
+    plan: starter  # $7/mo for 1GB
+    region: singapore
+    databaseName: fundcatalyst
+    user: fcvn
